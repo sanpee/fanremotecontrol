@@ -1,0 +1,216 @@
+<html>
+<head>
+
+	<!-- Google Material Design -->
+	<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" >
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" >
+	<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+	<!-- CSS overriding -->
+	<link  href="style.css" rel="stylesheet">
+
+	<script>
+		// For development purpose
+		const HostIP = "192.168.0.116";
+		var settings;
+		var websocket;
+
+		function sendControl( code, len, protocol, pulselen ){
+			var param = "code=" + code;
+			if(len){
+				param += "&len=" + len;		
+			}
+			if(protocol){
+				param += "&protocol=" + protocol;		
+			}
+			if(pulselen){
+				param += "&pulselen=" + pulselen;		
+			}
+			console.log(param);
+			
+			var xhr = new XMLHttpRequest();
+			xhr.open("GET", (isRunLocalFile()?("http://"+HostIP):"") + "/rf?" + param);
+			xhr.send();
+		}
+		
+		function isRunLocalFile()
+		{
+			switch(window.location.protocol) {
+   				case 'http:':
+   				case 'https:':
+     				return false;
+     			break;
+   				
+				case 'file:':
+					return true;
+     			break;
+   				
+				 default: 
+					return true;
+			}	
+		}
+		
+		function htmlToElement(html) {
+    		var template = document.createElement('template');
+    		html = html.trim(); // Never return a text node of whitespace as the result
+    		template.innerHTML = html;
+    		return template.content.firstChild;
+		}
+
+		function makeControlButtonTemplate(){
+			return htmlToElement(
+				`<div class="buttonholder">
+				<button class="mdc-button mdc-button--raised control-button" id="cmd-button">
+					<span class="mdc-button__label">Cmd Here</span>
+				</button>
+				</div>`, 
+				"text/xml"
+				);
+		}
+
+		function makeControlButtonEditTemplate(){
+			return htmlToElement(
+    			`<div class="buttonholder">
+				<button class="mdc-button mdc-button--raised control-button" id="cmd-button">
+        			<span class="mdc-button__label">Cmd Here</span>
+    			</button>
+				<button class="mdc-button mdc-button--raised control-button sub-button" id="edit-button">
+        			<div class="material-icons control-button-edit">mode</div>
+    			</button>
+    			<button class="mdc-button mdc-button--raised control-button sub-button" id="edit-delete">
+        			<div class="material-icons control-button-edit">delete</div>
+    			</button>
+				</div>`, 
+				"text/xml"
+				);
+		}
+
+		function renderFanCtrlPanel(fan){
+			console.log( "Rendering Panel " + fan.name);
+			document.getElementById("oddcol").innerHTML = "";
+			document.getElementById("evencol").innerHTML = "";
+
+			fan.controls.forEach( (control,i) => {
+				let button_holder = makeControlButtonTemplate();
+				let buttontext = button_holder.getElementsByClassName("mdc-button__label");
+				buttontext[0].innerText = control.text;
+
+				// console.log(button_holder);
+				let cmd_button = button_holder.getElementsByClassName("mdc-button")[0];
+				console.log(cmd_button);
+				cmd_button.addEventListener("click",function(){
+					sendControl(control.code,control.len,control.protocol,control.pulselen);
+				});
+				const panel = document.getElementById((i%2)?"oddcol":"evencol");
+				panel.appendChild(button_holder);
+			});
+		}
+
+		function renderMainPanel(fansettings)
+		{
+			var chiptemp = document.getElementById("chiptemp");
+			var chipbar = document.getElementById("chipbar");	
+			if(fansettings.fans && Array.isArray(fansettings.fans) ){
+				fansettings.fans.forEach(fan => {
+					fanchip = chiptemp.cloneNode(true);
+					fanchip.id = fan.name;
+					let text = fanchip.getElementsByClassName("mdc-chip__text");
+					text[0].innerText = fan.name;
+					let buttons = fanchip.getElementsByClassName("mdc-chip__primary-action");
+					buttons[0].addEventListener("click", function(){renderFanCtrlPanel(fan);});
+						chipbar.appendChild(fanchip);
+				});
+				
+				if(fansettings.fans.length > 0) {
+					renderFanCtrlPanel(fansettings.fans[0]);
+				}
+			}
+			chipbar.removeChild(chiptemp);
+		}
+
+		function initWebSocket() {
+			var gateway = (isRunLocalFile()?"ws://"+HostIP+"/ws":`ws://${window.location.hostname}/ws`);
+			console.log("Connecting to websocket " + gateway);	
+			websocket = new WebSocket(gateway);
+			websocket.onopen    = ws_onOpen;
+			websocket.onclose   = ws_onClose;
+			websocket.onmessage = ws_onMessage;
+		}
+
+		function ws_onOpen(event) {
+  			console.log('Websocket Connection opened');
+  		}
+
+		function ws_onClose(event) {
+  			console.log('Websocket Connection closed');
+  			setTimeout(initWebSocket, 2000);
+		}   
+
+		function ws_onMessage(event) {
+			console.log(event.data);
+			var code = JSON.parse(event.data);
+			console.log(code);
+		}	
+
+		function Onload(){
+		
+			const buttons = document.querySelectorAll('.mdc-button');
+			for (const button of buttons) {
+   				mdc.ripple.MDCRipple.attachTo(button);
+			}
+
+			var xhr = new XMLHttpRequest();
+			let settingsUrl = (isRunLocalFile()?("http://"+HostIP):"") + "/settings"; 
+			console.log("Getting settings from " + settingsUrl);
+			xhr.open("GET", settingsUrl);
+			xhr.onreadystatechange = function () {
+  				if(this.readyState === XMLHttpRequest.DONE) {
+					settings = JSON.parse(this.responseText);
+					renderMainPanel(settings);
+				}
+			}	
+			xhr.send();
+
+			initWebSocket();
+		}
+	
+	</script>
+</head>
+<body onload="Onload()" id="mainbody">
+	
+	<header class="mdc-top-app-bar">
+		<div class="remotetoolbar mdc-top-app-bar__row">
+		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+			<button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open navigation menu">menu</button>
+			<span class="mdc-top-app-bar__title">Fan Control</span>
+		  </section>
+		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+			<button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Settings">settings</button>
+		  </section>
+		</div>
+	</header>
+	  
+	<main class="mdc-top-app-bar--fixed-adjust">
+		
+		<div class="mdc-chip-set" role="grid" id="chipbar">
+			<div class="mdc-chip fan-chip" role="row" id="chiptemp">
+			  <div class="mdc-chip__ripple"></div>
+			  <span role="gridcell">
+				<span role="button" tabindex="0" class="mdc-chip__primary-action">
+				  <span class="mdc-chip__text">Chip One</span>
+				  <span class="material-icons-two-tone md-48">delete</span>
+				</span>
+			  </span>
+			</div>
+		  </div>
+		</div>
+		
+		
+		<div class="panelrow">
+			<div class="panelcol" id="evencol"></div>
+			<div class="panelcol" id="oddcol"></div>
+		</div>
+		
+	 </main>
+
+</body>
+</html>
