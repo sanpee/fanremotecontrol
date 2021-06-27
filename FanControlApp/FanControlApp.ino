@@ -80,6 +80,7 @@ void loop(){
     WiFi.disconnect();
     WiFi.reconnect();
     previousMillis = currentMillis;
+    count = 0;
   }   
 }
 

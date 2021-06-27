@@ -7,48 +7,10 @@
 	<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
 	<!-- CSS overriding -->
 	<link  href="style.css" rel="stylesheet">
-
+	<script src="remotecontrol.js"></script>	
 	<script>
-		// For development purpose
-		const HostIP = "192.168.0.116";
 		var settings;
-		var websocket;
-
-		function sendControl( code, len, protocol, pulselen ){
-			var param = "code=" + code;
-			if(len){
-				param += "&len=" + len;		
-			}
-			if(protocol){
-				param += "&protocol=" + protocol;		
-			}
-			if(pulselen){
-				param += "&pulselen=" + pulselen;		
-			}
-			console.log(param);
-			
-			var xhr = new XMLHttpRequest();
-			xhr.open("GET", (isRunLocalFile()?("http://"+HostIP):"") + "/rf?" + param);
-			xhr.send();
-		}
-		
-		function isRunLocalFile()
-		{
-			switch(window.location.protocol) {
-   				case 'http:':
-   				case 'https:':
-     				return false;
-     			break;
-   				
-				case 'file:':
-					return true;
-     			break;
-   				
-				 default: 
-					return true;
-			}	
-		}
-		
+	
 		function htmlToElement(html) {
     		var template = document.createElement('template');
     		html = html.trim(); // Never return a text node of whitespace as the result
@@ -172,7 +134,11 @@
 
 			initWebSocket();
 		}
-	
+		
+		function onSettings(){
+			// window.location.href = (isRunLocalFile()?("http://"+HostIP):"") + "/configure.html";
+			window.location.href = "./configure.html";
+		}
 	</script>
 </head>
 <body onload="Onload()" id="mainbody">
@@ -184,7 +150,7 @@
 			<span class="mdc-top-app-bar__title">Fan Control</span>
 		  </section>
 		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
-			<button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Settings">settings</button>
+			<button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Settings" onclick="onSettings()">settings</button>
 		  </section>
 		</div>
 	</header>

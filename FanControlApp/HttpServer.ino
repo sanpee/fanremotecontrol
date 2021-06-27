@@ -8,31 +8,7 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-ArRequestHandlerFunction handleRoot([](AsyncWebServerRequest *request){
-  AsyncWebServerResponse *response;
-  Serial.print("GET /");
-  if (SPIFFS.exists("/index.html")) { // If the file exists                      
-    response = request->beginResponse(SPIFFS, "/index.html", "text/html");
-    Serial.println(" - Reading from /index.html.");
-    response->addHeader("Access-Control-Allow-Origin", "*");
-    request->send(response);       
-  }
-  else {
-    response = request->beginResponse(200, "text/html",  "Please setup the board!");
-    Serial.println(" - index.html not found. Setup the board.");
-    response->addHeader("Access-Control-Allow-Origin", "*");
-    request->send(response);
-  }  
-});
-
-ArRequestHandlerFunction handleStyleCss([](AsyncWebServerRequest *request){
-  Serial.println("GET /style.css");
-  AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/style.css", "text/css");
-  response->addHeader("Access-Control-Allow-Origin", "*");
-  request->send(response);       
-});
-
-ArRequestHandlerFunction handleSettingsJson([](AsyncWebServerRequest *request){
+ArRequestHandlerFunction onGETSettings([](AsyncWebServerRequest *request){
   Serial.print("GET /settings");
   Serial.println(" - Reading from /settings.json.");
   AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/settings.json", "application/json");
@@ -40,15 +16,7 @@ ArRequestHandlerFunction handleSettingsJson([](AsyncWebServerRequest *request){
   request->send(response);       
 });
 
-ArRequestHandlerFunction onGETWifi([](AsyncWebServerRequest *request){
-  Serial.print("GET /wifi");
-  Serial.println(" - Reading from /wifi.html");
-  AsyncWebServerResponse *response = request->beginResponse(SPIFFS, "/wifi.html", "text/html");
-  response->addHeader("Access-Control-Allow-Origin", "*");
-  request->send(response);       
-});
-
-ArBodyHandlerFunction handlePostSettings([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
+ArBodyHandlerFunction onPOSTSettings([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
   AsyncWebServerResponse *response;
   char szText[512] = {};
   
@@ -74,10 +42,10 @@ ArBodyHandlerFunction handlePostSettings([](AsyncWebServerRequest *request, uint
 ArBodyHandlerFunction onPOSTfsfile([](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total){
   AsyncWebServerResponse *response;
   char szText[512] = {};
-  snprintf(szText, sizeof(szText), "POST /fs/file [%d~%d]/%d", index, index+len, total);
-  Serial.println(szText);
-
+  
   if (request->hasArg("path")) {
+    snprintf(szText, sizeof(szText), "POST /fs/file [%d~%d]/%d -> %s", index, index+len, total, request->arg("path").c_str());
+    Serial.println(szText);
     File file = SPIFFS.open("/" + request->arg("path"), (index==0)?"w":"a");
     if (file) {
       file.write( data, len );
@@ -118,30 +86,8 @@ ArRequestHandlerFunction onDELETEfsfile([](AsyncWebServerRequest *request){
   request->send(response);   
 });
 
-ArRequestHandlerFunction handleGetSettings([](AsyncWebServerRequest *request){
-    AsyncWebServerResponse *response;
-    char szText[512] = {};
-    Serial.println("GET /settings");
-    File file;
-    if (SPIFFS.exists("/settings.json")) {
-      file  = SPIFFS.open("/settings.json", "r");
-      snprintf(szText, sizeof(szText), "Reading /settings.json [size: %d bytes]", file.size());
-      Serial.println(szText);
-      // char *szBuf = (char *)malloc(file.size());
-      response = request->beginResponse(file, "/settings.json", "application/json");
-    } 
-    else {
-      response = request->beginResponse(500, "text/plain", "Settings not found.");
-    }
-    response->addHeader("Access-Control-Allow-Origin", "*");
-    request->send(response);
-    if(file){
-      file.close();        
-    }
-  
-});
 
-ArRequestHandlerFunction handleRf([](AsyncWebServerRequest *request){
+ArRequestHandlerFunction onGETRf([](AsyncWebServerRequest *request){
   String code;
   String len = "24";
   String protocol = "11";
@@ -230,20 +176,13 @@ void HttpServer_Init(){
   ws.onEvent(WebSocket_onEvent);
   server.addHandler(&ws);
 
-  server.on("/index.html",  HTTP_GET, handleRoot); 
-  server.on("/",            HTTP_GET, handleRoot); 
-  server.on("/style.css",   HTTP_GET, handleStyleCss);
-  server.on("/settings",    HTTP_POST, [](AsyncWebServerRequest * request){}, NULL, handlePostSettings);
-  // server.on("/settings",    HTTP_GET, handleGetSettings);
-  server.on("/settings",    HTTP_GET, handleSettingsJson );
-  server.on("/rf",          HTTP_GET, handleRf);
-  // server.on("/wifi",        HTTP_POST, onPOSTWifi);
-  server.on("/wifi",        HTTP_GET, onGETWifi);
-  
-  server.on("/fs/file",     HTTP_POST, [](AsyncWebServerRequest * request){}, NULL, onPOSTfsfile);
-  server.on("/fs/file",     HTTP_DELETE, onDELETEfsfile);
-  
-  server.on("/fs/list",     HTTP_GET, onGETfslist);
+  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  server.on("/settings",    HTTP_GET,     onGETSettings );
+  server.on("/settings",    HTTP_POST,    [](AsyncWebServerRequest * request){}, NULL, onPOSTSettings);
+  server.on("/rf",          HTTP_GET,     onGETRf);
+  server.on("/fs/file",     HTTP_POST,    [](AsyncWebServerRequest * request){}, NULL, onPOSTfsfile);
+  server.on("/fs/file",     HTTP_DELETE,  onDELETEfsfile);
+  server.on("/fs/list",     HTTP_GET,     onGETfslist);
 
   server.onNotFound([](AsyncWebServerRequest *request){
     String message = "File Not Found\n\n";

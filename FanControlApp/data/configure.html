@@ -1,0 +1,135 @@
+<html>
+<head>
+
+	<!-- Google Material Design -->
+	<link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" >
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp" >
+	<script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+	<!-- CSS overriding -->
+	<link  href="style.css" rel="stylesheet">
+    <script src="remotecontrol.js"></script>
+    <script>
+        var websocket;
+
+        function Onload(){
+            const buttons = document.querySelectorAll('.mdc-button');
+			for (const button of buttons) {
+   				mdc.ripple.MDCRipple.attachTo(button);
+			}
+
+			var xhr = new XMLHttpRequest();
+			let settingsUrl = (isRunLocalFile()?("http://"+HostIP):"") + "/settings"; 
+			console.log("Getting settings from " + settingsUrl);
+			xhr.open("GET", settingsUrl);
+			xhr.onreadystatechange = function () {
+  				if(this.readyState === XMLHttpRequest.DONE) {
+                    var settings = document.getElementById("settings");	
+                    settings.innerText = this.responseText;
+                    console.log(this.responseText);
+				}
+			}	
+			xhr.send();
+            initWebSocket();
+        }
+
+        function initWebSocket() {
+			var gateway = (isRunLocalFile()?"ws://"+HostIP+"/ws":`ws://${window.location.hostname}/ws`);
+			console.log("Connecting to websocket " + gateway);	
+			websocket = new WebSocket(gateway);
+			websocket.onopen    = ws_onOpen;
+			websocket.onclose   = ws_onClose;
+			websocket.onmessage = ws_onMessage;
+		}
+
+		function ws_onOpen(event) {
+  			console.log('Websocket Connection opened');
+  		}
+
+		function ws_onClose(event) {
+  			console.log('Websocket Connection closed');
+  			setTimeout(initWebSocket, 2000);
+		}   
+
+		function ws_onMessage(event) {
+			console.log(event.data);
+			// var code = JSON.parse(event.data);
+			// console.log(code);
+            var rfcode = document.getElementById("rfcode");
+            rfcode.innerText = event.data;
+		}
+        
+        function onSave(){
+            var settings = document.getElementById("settings");	
+            // console.log(settings.value);
+            // let settingsUrl = (isRunLocalFile()?("http://"+HostIP):"") + "/settings"; 
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/settings", true);
+            xhr.setRequestHeader("Content-type", "application/json");
+            xhr.onload = function() {
+                // Do whatever with response
+                // alert(xhr.responseText)
+                alert(xhr.status);
+            }
+            var settings = document.getElementById("settings");	
+			xhr.send(settings.value);
+        }
+        
+        function home_click(){
+            window.location.href = "./index.html";    
+        }
+
+    </script>
+</head>
+<body onload="Onload()" id="mainbody">
+
+    <header class="mdc-top-app-bar">
+		<div class="remotetoolbar mdc-top-app-bar__row">
+		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+			<button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open navigation menu">menu</button>
+			<span class="mdc-top-app-bar__title">Fan Control</span>
+		  </section>
+		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+            <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" onclick="home_click()" aria-label="Settings">home</button>
+		  </section>
+		</div>
+	</header>
+    
+    <main class="mdc-top-app-bar--fixed-adjust">
+ 
+        <label class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--no-label configure_textare">
+            <span class="mdc-notched-outline">
+            <span class="mdc-notched-outline__leading"></span>
+            <span class="mdc-notched-outline__trailing"></span>
+            </span>
+            <span class="mdc-text-field__resizer">
+            <textarea id="settings" class="mdc-text-field__input" rows="8" cols="40" aria-label="Label"></textarea>
+            </span>
+        </label>
+
+        <div class="mdc-chip-set" role="grid" id="chipbar">
+            <div class="mdc-chip save-button" role="row" id="chiptemp">
+            <div class="mdc-chip__ripple"></div>
+            <span role="gridcell">
+                <span role="button" tabindex="0" class="mdc-chip__primary-action" onclick="onSave()">
+                <span class="mdc-chip__text">Save</span>
+                <span class="material-icons-outlined md-48">save</span>
+                </span>
+            </span>
+            </div>
+        </div>
+        </div>    
+
+        <label class="mdc-text-field mdc-text-field--outlined mdc-text-field--textarea mdc-text-field--label rfcode">
+            <span class="mdc-notched-outline">
+                <span class="mdc-notched-outline__leading"></span>
+                <span class="mdc-notched-outline__trailing"></span>
+            </span>
+            <span class="mdc-text-field__resizer">
+                <textarea id="rfcode" class="mdc-text-field__input" rows="1" cols="40" aria-label="Label"></textarea>
+            </span>
+        </label>
+
+    </main>
+
+</body>
+</html>
