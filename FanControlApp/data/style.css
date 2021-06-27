@@ -11,6 +11,23 @@
     font-size: 100px;
 }
 
+.save-button {
+    height: 40px;
+    font-size: 15px;
+    border-radius: 20px;
+    visibility: visible;
+}
+
+.configure_textare {
+    width: 100%;
+    margin-top: 8px;
+    white-space: pre-wrap;
+}
+
+.rfcode {
+    width: 100%;
+}
+
 .panelrow {
     display: flex; 
 }
