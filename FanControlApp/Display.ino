@@ -18,9 +18,9 @@ void Display_Init() {
 }
 
 void Display_Clear() {
-//#if defined(WIFI_Kit_32)
+#if defined(WIFI_Kit_32)
   Heltec.display->clear();
-// #endif 
+#endif 
 }
 
 void Display_DrawText(int x, int y,String text) {
@@ -30,6 +30,8 @@ void Display_DrawText(int x, int y,String text) {
   Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
   Heltec.display->drawString(x,y,text);
   Heltec.display->display();
+#else
+  
 #endif
 }
 
