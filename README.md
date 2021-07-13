@@ -1,6 +1,6 @@
 # fanremotecontrol
 
-![image](images/fanremotecontrol.jpg)
+![image](images/FanRemoteControl.jpg)
 
 **Hardware Design #1**
 
