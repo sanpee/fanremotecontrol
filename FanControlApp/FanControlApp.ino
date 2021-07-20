@@ -47,18 +47,16 @@ void setup() {
     Serial.println(szHomeUrl);
     Diplay_QRCode(szHomeUrl, count);
   }
-  
-  
 }
 
 void loop(){
 
-  unsigned long currentMillis = millis();
-  
   RFControl_WaitForCode();
 
+  unsigned long currentMillis = millis();
+  
   // Refresh display every second approximate
-  if(currentMillis-previousRefreshMillis > 1000){
+  if(currentMillis-previousRefreshMillis > 5000){
     count++;
     digitalWrite(LED, count%2?LOW:HIGH); 
      
@@ -74,8 +72,7 @@ void loop(){
   }
   
   // if WiFi is down, try reconnecting every CHECK_WIFI_TIME seconds
-  if ((WiFi.status() != WL_CONNECTED) && (currentMillis - previousMillis >=interval)) {
-    // Serial.print(millis());
+  if ((WiFi.status()!=WL_CONNECTED)&&((currentMillis - previousMillis)>=interval)) {
     Serial.println(" Reconnecting to WiFi...");
     WiFi.disconnect();
     WiFi.reconnect();
@@ -83,4 +80,3 @@ void loop(){
     count = 0;
   }   
 }
-

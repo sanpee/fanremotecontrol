@@ -92,10 +92,18 @@ ArRequestHandlerFunction onGETRf([](AsyncWebServerRequest *request){
   String len = "24";
   String protocol = "11";
   String pulselen = "322";
-    
+  long codeData = 0;  
   for (uint8_t i = 0; i < request->args(); i++) {
     if( strcmp(request->argName(i).c_str(),"code")==0 ) {
-      code = request->arg(i);  
+      code = request->arg(i);
+      if (code.startsWith("0x")||code.startsWith("0X"))
+      {
+        code = code.substring(2);
+        codeData = strtol(code.c_str(), 0, 16);
+      }
+      else {
+        codeData = atol(code.c_str());  
+      }
     }
     else if( strcmp(request->argName(i).c_str(),"len")==0 ) {
       len = request->arg(i);   
@@ -110,7 +118,7 @@ ArRequestHandlerFunction onGETRf([](AsyncWebServerRequest *request){
   
   if(code.length()>0)
   {
-    RFControl_SendCode(atol(code.c_str()), atol(len.c_str()), atoi(pulselen.c_str()), atoi(protocol.c_str()) );
+    RFControl_SendCode(codeData, atol(len.c_str()), atoi(pulselen.c_str()), atoi(protocol.c_str()) );
   }
 
   AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "RF Code sent");
@@ -150,7 +158,6 @@ ArRequestHandlerFunction onGETfslist([](AsyncWebServerRequest *request){
   AsyncWebServerResponse *response = request->beginResponse(200, "text/html", sFileListing.c_str());
   response->addHeader("Access-Control-Allow-Origin", "*");
   request->send(response);  
-  
 });
 
 AwsEventHandler WebSocket_onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
@@ -171,6 +178,21 @@ AwsEventHandler WebSocket_onEvent([](AsyncWebSocket *server, AsyncWebSocketClien
   }
 });
 
+ArRequestHandlerFunction onNotFound([](AsyncWebServerRequest *request){ 
+  String message = "File Not Found\n\n";
+  message += "URI: ";
+  message += request->url();
+  message += "\nMethod: ";
+  message += (request->method() == HTTP_GET) ? "GET" : "POST";
+  message += "\nArguments: ";
+  message += request->args();
+  message += "\n";
+  for (uint8_t i = 0; i < request->args(); i++) {
+    message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+  }
+  request->send(404, "text/plain", message); 
+});
+  
 void HttpServer_Init(){
 
   ws.onEvent(WebSocket_onEvent);
@@ -183,21 +205,7 @@ void HttpServer_Init(){
   server.on("/fs/file",     HTTP_POST,    [](AsyncWebServerRequest * request){}, NULL, onPOSTfsfile);
   server.on("/fs/file",     HTTP_DELETE,  onDELETEfsfile);
   server.on("/fs/list",     HTTP_GET,     onGETfslist);
-
-  server.onNotFound([](AsyncWebServerRequest *request){
-    String message = "File Not Found\n\n";
-    message += "URI: ";
-    message += request->url();
-    message += "\nMethod: ";
-    message += (request->method() == HTTP_GET) ? "GET" : "POST";
-    message += "\nArguments: ";
-    message += request->args();
-    message += "\n";
-    for (uint8_t i = 0; i < request->args(); i++) {
-      message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
-    }
-    request->send(404, "text/plain", message);
-  });
+  server.onNotFound(onNotFound);
     
   server.begin();
   Serial.println("HTTP server started.");  
