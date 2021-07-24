@@ -32,8 +32,8 @@ void RFControl_WaitForCode() {
 
 String CodeToJson(unsigned long data, unsigned int length, unsigned int delay, unsigned int* raw, unsigned int protocol) {
   char txtBuf[128] = {};
-  // snprintf( txtBuf, sizeof(txtBuf), "\"code\":{ \"data\":\"%d\", \"len\":%2d, \"protocol\":%2d, \"pulselen\":%3d }", data, length, protocol, delay );
-  snprintf( txtBuf, sizeof(txtBuf), "\"code\":{ \"data\":\"0x%08lX\", \"len\":%2d, \"protocol\":%2d, \"pulselen\":%3d }", data, length, protocol, delay );
+  // snprintf( txtBuf, sizeof(txtBuf), "\"rf\":{ \"code\":\"%d\", \"len\":%2d, \"protocol\":%2d, \"pulselen\":%3d }", data, length, protocol, delay );
+  snprintf( txtBuf, sizeof(txtBuf), "\"rf\":{ \"code\":\"0x%08lX\", \"len\":%2d, \"protocol\":%2d, \"pulselen\":%3d }", data, length, protocol, delay );
   return String(txtBuf);  
 }
 

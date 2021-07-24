@@ -1,5 +1,5 @@
 // For development purpose
-const HostIP = "192.168.0.160";
+const HostIP = "192.168.0.120";
 
 function isRunLocalFile() {
     switch (window.location.protocol) {
@@ -7,11 +7,9 @@ function isRunLocalFile() {
         case 'https:':
             return false;
             break;
-
         case 'file:':
             return true;
             break;
-
         default:
             return true;
     }
@@ -29,8 +27,7 @@ function sendControl(code, len, protocol, pulselen) {
         param += "&pulselen=" + pulselen;
     }
     console.log(param);
-
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", (isRunLocalFile() ? ("http://" + HostIP) : "") + "/rf?" + param);
+    xhr.open("GET", (isRunLocalFile() ? ("http://" + HostIP):"") + "/rf?" + param);
     xhr.send();
 }

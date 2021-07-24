@@ -79,7 +79,7 @@
 					text[0].innerText = fan.name;
 					let buttons = fanchip.getElementsByClassName("mdc-chip__primary-action");
 					buttons[0].addEventListener("click", function(){renderFanCtrlPanel(fan);});
-						chipbar.appendChild(fanchip);
+					chipbar.appendChild(fanchip);
 				});
 				
 				if(fansettings.fans.length > 0) {
@@ -131,7 +131,6 @@
 				}
 			}	
 			xhr.send();
-
 			initWebSocket();
 		}
 		
@@ -141,13 +140,15 @@
 		}
 	</script>
 </head>
+
 <body onload="Onload()" id="mainbody">
 	
+	<!--Title-->
 	<header class="mdc-top-app-bar">
 		<div class="remotetoolbar mdc-top-app-bar__row">
 		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
 			<button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open navigation menu">menu</button>
-			<span class="mdc-top-app-bar__title">Fan Control</span>
+			<span class="mdc-top-app-bar__title">Fan Remote Control</span>
 		  </section>
 		  <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
 			<button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Settings" onclick="onSettings()">settings</button>
@@ -156,7 +157,7 @@
 	</header>
 	  
 	<main class="mdc-top-app-bar--fixed-adjust">
-		
+		<!--Bar for rooms-->
 		<div class="mdc-chip-set" role="grid" id="chipbar">
 			<div class="mdc-chip fan-chip" role="row" id="chiptemp">
 			  <div class="mdc-chip__ripple"></div>
@@ -169,11 +170,34 @@
 			</div>
 		  </div>
 		</div>
-		
-		
+		<!--
+			+---------------------------+
+			|          panelrow         |
+			|+------------+------------+| 
+			||  evencol   |   oddcol   ||
+			||            |            ||
+            ||            |            ||
+			||            |            ||
+			||            |            ||
+			||            |            ||
+			||            |            ||
+			||            |            ||
+			||            |            ||
+			|+------------+------------+|
+			+---------------------------+ 
+		-->
 		<div class="panelrow">
 			<div class="panelcol" id="evencol"></div>
 			<div class="panelcol" id="oddcol"></div>
+			
+			<div class="mdc-touch-target-wrapper center-align">
+				<button class="mdc-fab mdc-fab--mini mdc-fab--touch">
+				  <div class="mdc-fab__ripple"></div>
+				  <span class="material-icons mdc-fab__icon">add</span>
+				  <div class="mdc-fab__touch"></div>
+				</button>
+			 </div>
+
 		</div>
 		
 	 </main>
