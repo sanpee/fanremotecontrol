@@ -14,6 +14,13 @@
 |------------------------------|------------------------------|
 |![image](images/Design2-1.jpg)|![image](images/Design2-2.jpg)|
 
+**TX/RX Hardware**
+|  Brand/Model |  TX  | RX |
+|--------|-------------------------|-------------------------|
+| Type 1 |![image](images/TX-1.jpg)|![image](images/RX-1.jpg)|
+| Type 2 |![image](images/TX-2.jpg)|![image](images/RX-2.jpg)|
+
+
 **Prerequisites:**
 * Install esp32 in Arduino (https://randomnerdtutorials.com/installing-the-esp32-board-in-arduino-ide-windows-instructions/)
 * Other libraries needed
